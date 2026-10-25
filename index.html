@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Surfing School Intro</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Passion+One:wght@700&family=Poppins:wght@500;600;800&display=swap">
 <style>
 /* Layout: one 16:9 stage (portrait 9:16 on phones). Every overlay element sits at its Figma pixel position on a 1920x1080 frame that is scaled to fit. Single dark look by choice. */
@@ -107,7 +109,10 @@ html.cur-on,html.cur-on *{cursor:none!important}
 @media (hover:none),(pointer:coarse){#cur{display:none}html.cur-on,html.cur-on *{cursor:auto!important}}
 
 /* full screen: the stage fills the window (16:9 fitted to width or height on desktop, full width and the visible height on phones); the controls float over it */
+html{background:#000}
 html,body{height:100%}
+/* nothing of the overlay is shown until the first frame has been laid out by the script (no flash of the finished page) */
+.stage:not(.go) #frame{visibility:hidden}
 body{padding:0!important;background:#000;overflow:hidden}
 .wrap{max-width:none!important;margin:0!important;width:100%;min-height:100vh;min-height:100svh;display:grid;place-items:center;gap:0!important}
 .stage:not(.mob){width:100vw;height:100vh;height:100svh;aspect-ratio:auto;border-radius:0}
@@ -872,6 +877,7 @@ function frameLoop(now){
   tapEl.style.display=(blocked&&playing)?'flex':'none';
   var lv=render(t);
   updateDom(t,lv);
+  if(!stage.classList.contains('go'))stage.classList.add('go');
   audioFrame(t,playing);
   sheen.style.opacity=1-eio(seg(t,T.focus-.15,T.focus+.15));
   sl.value=t;ro.textContent=t.toFixed(1)+' / '+DUR.toFixed(1)+' с';
