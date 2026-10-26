@@ -72,6 +72,16 @@ input[type=range]{width:100%;accent-color:var(--yellow);min-height:28px}
 body.mob{padding-inline:0;padding-block:0}
 body.mob .bar,body.mob input[type=range],body.mob .note{margin-inline:16px;width:auto}
 body.mob .chips,body.mob #bSnd{display:none}
+
+/* ---------- scroll hint: small quiet text, not a button ---------- */
+#scrollHint{transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;pointer-events:none;font-family:var(--body);font-weight:500;font-size:14px;line-height:1;letter-spacing:.42em;text-transform:uppercase;color:rgba(255,255,255,.72);text-shadow:0 1px 3px rgba(0,0,0,.55);padding-left:.42em}
+#scrollHint i{display:block;width:1px;height:22px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,0));transform-origin:top;animation:shint 2.4s ease-in-out infinite}
+@keyframes shint{0%{transform:scaleY(.2);opacity:.2}55%{transform:scaleY(1);opacity:.9}100%{transform:scaleY(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){#scrollHint i{animation:none}}
+.stage.mob #scrollHint{left:470px!important;top:calc(1598px + var(--ex,0px) - var(--sab,0px))!important;font-size:20px}
+.stage.mob #scrollHint i{height:30px}
+/* bottom HUD read-outs are gone to keep the lower part light */
+#tm,#res,#batt{display:none!important}
 /* ---------- hover states + camera-style cursor ---------- */
 /* buttons: quick, clearly visible, same yellow as the headline */
 .frame .bt,.frame .bs,.frame #menuBtn{transition:background-color .15s,color .15s,border-color .15s,box-shadow .15s}
@@ -209,6 +219,8 @@ body.ctl-open .ctlp{display:flex}
 
         <button class="abs" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navPanel" style="left:823px;top:56px;display:none"><svg id="menuIc" width="61" height="61" viewBox="0 0 61 61" fill="none"><path d="M7.6 15.3H53.4M7.6 30.5H53.4M7.6 45.8H53.4" stroke="#fff" stroke-width="5.08" stroke-linecap="round"/></svg></button>
 
+        <!-- quiet scroll hint -->
+        <div class="abs" id="scrollHint" style="left:960px;top:1018px" aria-hidden="true"><span>Scroll</span><i></i></div>
         <!-- focus frame and crosshair -->
         <div class="abs" id="focus" style="left:852.5px;top:664.5px;width:260px;height:339px">
           <svg class="abs fo" style="left:0;top:0" width="260" height="339" viewBox="0 0 260 339" fill="none">
@@ -251,14 +263,6 @@ body.ctl-open .ctlp{display:flex}
       <div class="abs pt sh" id="withE" style="left:1458px;top:578px;width:418px;font-size:200px;letter-spacing:-4px">with</div>
       <div class="abs pt sh" id="us" style="left:1458px;top:726px;width:418px;text-align:right;font-size:200px;letter-spacing:-4px">us</div>
 
-      <button class="abs bs" id="bspot" type="button" aria-label="Book the spot" style="left:757.5px;top:475px">
-        <span class="pp sh">Book the spot</span>
-        <svg style="left:-1px;top:52px" width="15" height="15" viewBox="0 0 15 15"><use href="#cornerBL"/></svg>
-        <svg style="left:-.4px;top:-1.5px" width="17" height="14" viewBox="0 0 17 14"><use href="#cornerTL"/></svg>
-        <svg style="left:389.4px;top:-1.5px;transform:scaleX(-1)" width="17" height="14" viewBox="0 0 17 14"><use href="#cornerTL"/></svg>
-        <svg style="left:390.9px;top:52px;transform:scaleX(-1)" width="15" height="15" viewBox="0 0 15 15"><use href="#cornerBL"/></svg>
-      </button>
-
       <!-- final block (phones): logo and name over the underwater picture -->
       <div class="abs fin" id="fin" style="left:0;top:0;width:100%;height:100%;justify-content:center;gap:30px">
         <svg id="f0" width="150" height="74" viewBox="0 0 86 42"><use href="#logoG"/></svg>
@@ -298,7 +302,7 @@ var RAMPN=6,RAMPD=.1;                /* slow motion is entered through a short s
 var RAMPV=RAMPD*(.9+.8+.7+.6+.5+.4);   /* video seconds used up by the ramp */
 var VS=15.95-RAMPN*RAMPD-(7.95-RAMPV); /* video starts (chosen so the ramp ends exactly on the old slow-motion cue and the hand touches the wave at the same time as before) */
 var SLOW0=15.95,VSLOW=7.95,VEND=9.0,RS=SLOW0-RAMPN*RAMPD; /* the wave takes the screen at video ~8.1 s: from here the video runs at 0.4x */
-var VZ=1.03,VX=26.2;                 /* the boy sits exactly on the screen's centre line */
+var VZ=1.24,VX=31.5;                 /* the boy sits exactly on the screen's centre line */
 var ENDA=1e9,ENDB=1e9+1;   /* the wave-logo screen is removed: the wave goes straight into the hero */             /* dissolve into the underwater picture with logo and name */
 var RET0=16.9,RET1=17.8,RT0=17.2,RT1=18.0,BSRET=17.5; /* the logo screen is short, then back to the hero picture; the button pops in early */
 var HEADOUT0=16.0,HEADOUT1=16.5;     /* the headline goes only when the wave covers it */
@@ -461,7 +465,7 @@ function drawScene(u){
   if(MOB)return drawSceneM(u);
   var sw=(1-seg(u,VS-1,VS))*(W/1280);   /* handheld sway settles before the video */
   c.save();c.translate(Math.sin(u*1.7)*1.5*sw,Math.cos(u*1.3)*1.1*sw);
-  c.save();c.translate((960+VX)*W/1920,540*H/1080);c.scale(VZ,VZ);c.translate(-960*W/1920,-540*H/1080);
+  c.save();c.translate((960+VX)*W/1920,H);c.scale(VZ,VZ);c.translate(-960*W/1920,-H);
   drawPhoto(u);
   var a=eio(seg(u,VS-.15,VS+.25));
   if(a>0&&vidReady()){c.globalAlpha=a;c.drawImage(vid,0,0,W,H);c.globalAlpha=1}
@@ -473,7 +477,7 @@ function drawScene(u){
   }
   var h=eio(seg(u,RET0,RET1));   /* back to the hero picture */
   if(h>0){
-    c.save();c.translate((960+VX)*W/1920,540*H/1080);c.scale(VZ,VZ);c.translate(-960*W/1920,-540*H/1080);
+    c.save();c.translate((960+VX)*W/1920,H);c.scale(VZ,VZ);c.translate(-960*W/1920,-H);
     c.globalAlpha=h;drawPhoto(u);c.restore();
   }
   c.restore();
@@ -543,7 +547,7 @@ function render(u){
 }
 /* where the boy is on the 1920x1080 frame, for the focus frame */
 function manX(u){return MOB?MW/2:960}
-function manY(u){return MOB?FCY:540+(834.39-540)*VZ}
+function manY(u){return MOB?FCY:1080+(834.39-1080)*VZ}
 
 /* keep the video on the page clock: normal speed, then slow motion as the wave covers the screen, then hold */
 function rateOf(u){
@@ -617,7 +621,7 @@ function anchorDesktop(cx,cy){
     anchors=[];
     var kids=[].slice.call(frame.querySelectorAll('#hud > *, .frame > .abs, .frame > .row16, .frame > .pt, .frame > .pp'));
     kids.forEach(function(e){
-      if(e.id==='focus'||e.id==='cross'||e.id==='fin'||e.id==='navPanel'||e.id==='hud'||e.id==='bspot')return;
+      if(e.id==='focus'||e.id==='cross'||e.id==='fin'||e.id==='navPanel'||e.id==='hud'||e.id==='bspot'||e.id==='scrollHint')return;
       var l=parseFloat(e.style.left),t=parseFloat(e.style.top);if(isNaN(l)||isNaN(t))return;
       var w=e.offsetWidth||parseFloat(e.getAttribute('width'))||0,h=e.offsetHeight||parseFloat(e.getAttribute('height'))||0;
       anchors.push({e:e,l:l,t:t,w:w,h:h});
@@ -675,6 +679,9 @@ function pad(n){return n<10?'0'+n:''+n}
 function chroma(){return ',6px 0 rgba(255,30,80,.8),-6px 0 rgba(0,210,255,.75)'}
 function reveal(el,p,u,k){
   if(p<=0){el.style.opacity=0;return}
+  if(k<7){   /* big headline: clean fade and a short rise, no glitch */
+    var q0=eio(Math.min(1,p));el.style.clipPath='';el.style.textShadow='';el.style.opacity=q0;el.style.transform=p>=1?'':'translateY('+((1-q0)*18).toFixed(1)+'px)';return
+  }
   el.style.opacity=1;
   if(p>=1){el.style.clipPath='';el.style.transform='';el.style.textShadow='';return}
   var q=Math.ceil(p*10)/10,j=hs(Math.floor(u*30)+k);
@@ -687,7 +694,7 @@ function flick(el,t0,u){
   el.style.opacity=(u-t0)<.28?(hs(Math.floor(u*30)+3)>.4?1:.15):1;
 }
 /* "Book the spot": pops up from below with a small overshoot and a yellow glow, nothing like the wipe used for the text */
-var bsEl=ge('bspot');
+var bsEl=ge('bspot')||document.createElement('div');
 function popBtn(p,u){
   if(p<=0){bsEl.style.opacity=0;return}
   if(reduce||p>=1){bsEl.style.opacity=reduce?p:1;bsEl.style.transform='';bsEl.style.boxShadow='';return}
@@ -696,7 +703,14 @@ function popBtn(p,u){
   bsEl.style.transform='translateY('+((1-e)*26).toFixed(1)+'px) scale('+(.82+.18*b).toFixed(3)+')';
   bsEl.style.boxShadow='0 0 '+(34*(1-p)).toFixed(1)+'px rgba(253,198,57,'+(.6*(1-p)).toFixed(2)+')';
 }
+var FOC_UP=200,SC=0,SCT=0,scLast=0,heroReady=false;
 function updateDom(u,lv){
+  heroReady=u>=RT1;
+  var nowS=performance.now(),dS=Math.min(.1,(nowS-scLast)/1000);scLast=nowS;
+  if(!heroReady)SCT=0;
+  SC+=(SCT-SC)*Math.min(1,dS*9);if(Math.abs(SCT-SC)<.002)SC=SCT;
+  var sh=ge('scrollHint');
+  if(sh){var ho=heroReady?eio(seg(u,RT1,RT1+.8)):0;sh.style.opacity=ho*(1-Math.min(1,SC*4))*.95}
   frame.style.transform='translate('+OX+'px,'+OY+'px) scale('+K+') translate('+((hs(Math.floor(u*30)+2)-.5)*lv*60)+'px,0)';
   var i;
   for(i=0;i<hudItems.length;i++)flick(hudItems[i][0],hudItems[i][1],u);
@@ -720,8 +734,11 @@ function updateDom(u,lv){
     var p=eio(seg(u,1.3,T.timer)),j=(1-p)*Math.sin(u*25)*14;
     var fx=lerp(DW/2,manX(u),p)+j,fy=lerp(DH/2,manY(u),p)+j,fk=lerp(2.4,1,p);
     focus.style.display='block';
-    focus.style.transform='translate('+(fx-FCX)+'px,'+(fy-FCY)+'px) scale('+fk+')';
-    focus.style.opacity=(u<1.6?(hs(Math.floor(u*30)+7)>.4?1:.2):1)*fadeF;
+    fy-=MOB?0:FOC_UP;   /* the frame sits higher than the surfer's feet */
+    var xs=1+SC*2.6;   /* scroll: the frame grows and its corners move apart */
+    focus.style.transform='translate('+(fx-FCX)+'px,'+(fy-FCY)+'px) scale('+(fk*xs)+')';
+    focus.style.opacity=(u<1.6?(hs(Math.floor(u*30)+7)>.4?1:.2):1)*fadeF*(1-eio(seg(SC,.25,.85)));
+    if(SC>=.99)focus.style.display='none';
   }
   /* phones: logo and name over the underwater picture */
   if(MOB){var fo=eio(seg(u,ENDA,ENDB))*(1-eio(seg(u,RET0,RET0+.7)));finEl.style.opacity=fo;finEl.style.visibility=fo>0?'visible':'hidden'}
@@ -757,7 +774,7 @@ document.addEventListener('keydown',function(ev){if(ev.key==='Escape')setMenu(fa
    once it has settled, so a resting letter is the untouched original. The effect: thin horizontal slices of the letter slide
    sideways like a reflection in water, a soft horizontal smear follows the movement, and only a little fine spray stays at the edge. */
 (function(){
-  if(reduce)return;
+  return;   /* the letter ripple is switched off: it lagged, the video is enough */
   var NS='http://www.w3.org/2000/svg',SHIFT=.2,BANDS=.085,SMEAR=.028,SPRAY=.025,FADE=MOB?600:1500,ATTACK=40,KICK=.8;
   var svg=document.createElementNS(NS,'svg'),defs=document.createElementNS(NS,'defs');
   svg.setAttribute('width','0');svg.setAttribute('height','0');svg.setAttribute('aria-hidden','true');svg.style.cssText='position:absolute;width:0;height:0';
@@ -857,7 +874,7 @@ sl.addEventListener('input',function(){t=parseFloat(sl.value);playing=false;bloc
   chips.appendChild(b);
 });
 ['bookTrip','bspot'].forEach(function(id){
-  ge(id).addEventListener('click',function(){stage.dispatchEvent(new CustomEvent('book-spot',{bubbles:true,detail:{from:id}}))});
+  if(ge(id))ge(id).addEventListener('click',function(){stage.dispatchEvent(new CustomEvent('book-spot',{bubbles:true,detail:{from:id}}))});
 });
 var tapEl=ge('tapPlay');
 tapEl.addEventListener('click',function(){
@@ -886,6 +903,19 @@ function frameLoop(now){
 sl.max=DUR;
 syncUI();
 requestAnimationFrame(frameLoop);
+/* scroll: the page itself does not move; the gesture opens the camera frame (down = expand, up = back) */
+(function(){
+  function nudge(d){if(!heroReady)return;SCT=Math.max(0,Math.min(1,SCT+d))}
+  addEventListener('wheel',function(e){nudge(e.deltaY/520)},{passive:true});
+  var ty=null;
+  addEventListener('touchstart',function(e){ty=e.touches[0].clientY},{passive:true});
+  addEventListener('touchmove',function(e){if(ty==null)return;var y=e.touches[0].clientY;nudge((ty-y)/260);ty=y},{passive:true});
+  addEventListener('touchend',function(){ty=null},{passive:true});
+  addEventListener('keydown',function(e){
+    if(e.key==='ArrowDown'||e.key==='PageDown'||(e.key===' '&&e.target===document.body)){if(heroReady){SCT=1}}
+    else if(e.key==='ArrowUp'||e.key==='PageUp'){SCT=0}
+  });
+})();
 })();
 
 
@@ -936,6 +966,7 @@ requestAnimationFrame(frameLoop);
     m.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
   });
 })();
+
 </script>
 
 </html>
