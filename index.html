@@ -480,25 +480,31 @@ function drawScene(u){
     /* the footage is the picture's own shot but covers it only from VOX,VOY on, so a strip at the bottom and the left edge is not covered.
        Right at the start the footage eases in to 1.12x about its top-right corner (a slow push-in, about one second) until it covers the whole frame;
        until then the still picture shows through in the strips. */
-    var zs=1+.12*eio(seg(u,VS-.1,VS+1.7)),ax=ox+W,ay=oy;
+    var zp=eio(seg(u,VS-.1,VS+1.7)),zs=1+.12*zp,ax=ox+W,ay=oy;
     c.save();c.translate(ax,ay);c.scale(zs,zs);c.translate(-ax,-ay);
     /* the footage does not reach the bottom/left edge of the picture, so there the still (the real continuation of the same shot) shows through.
        That seam is feathered over F px instead of being a hard edge, so no "insert" line is visible when the footage takes over */
     c.globalAlpha=a;
-    var F=Math.round(80*f),sx=F*vw/W,sy=F*vh/H;
+    /* the feathered seam only exists while the footage has not yet grown over the picture's edge: its width shrinks to nothing as the push-in completes,
+       so once the footage fills the frame it is drawn plain and no trace of the still can show through at the bottom/left for the rest of the clip */
+    var Fm=Math.round(80*f),F=Math.round(Fm*(1-zp));
+    if(F<3){c.drawImage(vid,ox,oy,W,H)}
+    else{
+    var sx=F*vw/W,sy=F*vh/H;
     var cx=Math.round(ox+F),cy=Math.round(oy+H-F);   /* whole-pixel seam positions: no anti-aliased hairline where band and body meet */
-    c.save();c.beginPath();c.rect(cx-2,oy,ox+W-cx+2,cy-oy+2);c.clip();   /* 2 px overlap into the feathered bands: no hairline while the footage is scaled */c.drawImage(vid,ox,oy,W,H);c.restore();
-    if(!fbL||fbL.width!==F){fbL=document.createElement('canvas');fbL.width=F;fbL.height=H;fbB=document.createElement('canvas');fbB.width=W-F;fbB.height=F}
+    c.save();c.beginPath();c.rect(cx-2,oy,ox+W-cx+2,cy-oy+2);c.clip();c.drawImage(vid,ox,oy,W,H);c.restore();
+    if(!fbL||fbL.width!==Fm){fbL=document.createElement('canvas');fbL.width=Fm;fbL.height=H;fbB=document.createElement('canvas');fbB.width=W;fbB.height=Fm}
     var g,x1=fbL.getContext('2d'),x2=fbB.getContext('2d');
-    x1.globalCompositeOperation='source-over';x1.clearRect(0,0,F,H);x1.drawImage(vid,0,0,sx,vh,0,0,F,H);
+    x1.globalCompositeOperation='source-over';x1.clearRect(0,0,Fm,H);x1.drawImage(vid,0,0,sx,vh,0,0,F,H);
     x1.globalCompositeOperation='destination-in';
     g=x1.createLinearGradient(0,0,F,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'#000');x1.fillStyle=g;x1.fillRect(0,0,F,H);
     g=x1.createLinearGradient(0,H-F,0,H);g.addColorStop(0,'#000');g.addColorStop(1,'rgba(0,0,0,0)');x1.fillStyle=g;x1.fillRect(0,0,F,H);
-    c.drawImage(fbL,ox,oy,cx-ox,H);
-    x2.globalCompositeOperation='source-over';x2.clearRect(0,0,W-F,F);x2.drawImage(vid,sx,vh-sy,vw-sx,sy,0,0,W-F,F);
+    c.drawImage(fbL,0,0,F,H,ox,oy,cx-ox,H);
+    x2.globalCompositeOperation='source-over';x2.clearRect(0,0,W,Fm);x2.drawImage(vid,sx,vh-sy,vw-sx,sy,0,0,W-F,F);
     x2.globalCompositeOperation='destination-in';
-    g=x2.createLinearGradient(0,0,0,F);g.addColorStop(0,'#000');g.addColorStop(1,'rgba(0,0,0,0)');x2.fillStyle=g;x2.fillRect(0,0,W-F,F);
-    c.drawImage(fbB,cx,cy,ox+W-cx,oy+H-cy);
+    g=x2.createLinearGradient(0,0,0,F);g.addColorStop(0,'#000');g.addColorStop(1,'rgba(0,0,0,0)');x2.fillStyle=g;x2.fillRect(0,0,W,F);
+    c.drawImage(fbB,0,0,W-F,F,cx,cy,ox+W-cx,oy+H-cy);
+    }
     c.globalAlpha=1;
     c.restore();
   }
