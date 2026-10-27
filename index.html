@@ -480,14 +480,14 @@ function drawScene(u){
     /* the footage is the picture's own shot but covers it only from VOX,VOY on, so a strip at the bottom and the left edge is not covered.
        Right at the start the footage eases in to 1.12x about its top-right corner (a slow push-in, about one second) until it covers the whole frame;
        until then the still picture shows through in the strips. */
-    var zs=1+.12*eio(seg(u,VS,VS+1.6)),ax=ox+W,ay=oy;
+    var zs=1+.12*eio(seg(u,VS-.1,VS+1.7)),ax=ox+W,ay=oy;
     c.save();c.translate(ax,ay);c.scale(zs,zs);c.translate(-ax,-ay);
     /* the footage does not reach the bottom/left edge of the picture, so there the still (the real continuation of the same shot) shows through.
        That seam is feathered over F px instead of being a hard edge, so no "insert" line is visible when the footage takes over */
     c.globalAlpha=a;
-    var F=Math.round(56*f),sx=F*vw/W,sy=F*vh/H;
+    var F=Math.round(80*f),sx=F*vw/W,sy=F*vh/H;
     var cx=Math.round(ox+F),cy=Math.round(oy+H-F);   /* whole-pixel seam positions: no anti-aliased hairline where band and body meet */
-    c.save();c.beginPath();c.rect(cx,oy,ox+W-cx,cy-oy);c.clip();c.drawImage(vid,ox,oy,W,H);c.restore();
+    c.save();c.beginPath();c.rect(cx-2,oy,ox+W-cx+2,cy-oy+2);c.clip();   /* 2 px overlap into the feathered bands: no hairline while the footage is scaled */c.drawImage(vid,ox,oy,W,H);c.restore();
     if(!fbL||fbL.width!==F){fbL=document.createElement('canvas');fbL.width=F;fbL.height=H;fbB=document.createElement('canvas');fbB.width=W-F;fbB.height=F}
     var g,x1=fbL.getContext('2d'),x2=fbB.getContext('2d');
     x1.globalCompositeOperation='source-over';x1.clearRect(0,0,F,H);x1.drawImage(vid,0,0,sx,vh,0,0,F,H);
