@@ -73,13 +73,16 @@ body.mob{padding-inline:0;padding-block:0}
 body.mob .bar,body.mob input[type=range],body.mob .note{margin-inline:16px;width:auto}
 body.mob .chips,body.mob #bSnd{display:none}
 
-/* ---------- scroll hint: small quiet text, not a button ---------- */
-#scrollHint{transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;pointer-events:none;font-family:var(--body);font-weight:500;font-size:14px;line-height:1;letter-spacing:.42em;text-transform:uppercase;color:rgba(255,255,255,.72);text-shadow:0 1px 3px rgba(0,0,0,.55);padding-left:.42em}
-#scrollHint i{display:block;width:1px;height:22px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,0));transform-origin:top;animation:shint 2.4s ease-in-out infinite}
-@keyframes shint{0%{transform:scaleY(.2);opacity:.2}55%{transform:scaleY(1);opacity:.9}100%{transform:scaleY(1);opacity:0}}
-@media (prefers-reduced-motion:reduce){#scrollHint i{animation:none}}
-.stage.mob #scrollHint{left:470px!important;top:calc(1598px + var(--ex,0px) - var(--sab,0px))!important;font-size:20px}
-.stage.mob #scrollHint i{height:30px}
+/* ---------- replay indicator: a quiet round "replay" control (circular arrow + word), clearly not a scroll cue ---------- */
+#scrollHint{transform:translateX(-50%);display:flex;flex-direction:row;align-items:center;gap:12px;opacity:0;pointer-events:none;font-family:var(--body);font-weight:500;font-size:14px;line-height:1;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,255,255,.85);text-shadow:0 1px 3px rgba(0,0,0,.55);padding:10px 18px 10px 12px;border:1px solid rgba(255,255,255,.38);border-radius:999px;background:rgba(0,0,0,.28);cursor:pointer;transition:background .25s,border-color .25s,color .25s;-webkit-appearance:none;appearance:none}
+#scrollHint svg{width:22px;height:22px;flex:none;animation:rspin 6s linear infinite paused}
+#scrollHint:hover svg,#scrollHint:focus-visible svg{animation-play-state:running}
+#scrollHint:hover,#scrollHint:focus-visible{background:rgba(0,0,0,.5);border-color:rgba(255,255,255,.8);color:#fff;outline:none}
+#scrollHint:focus-visible{box-shadow:0 0 0 2px #fff}
+@keyframes rspin{to{transform:rotate(-360deg)}}
+@media (prefers-reduced-motion:reduce){#scrollHint svg{animation:none!important}}
+.stage.mob #scrollHint{left:470px!important;top:calc(1598px + var(--ex,0px) - var(--sab,0px))!important;font-size:20px;gap:14px;padding:14px 26px 14px 18px}
+.stage.mob #scrollHint svg{width:30px;height:30px}
 /* bottom HUD read-outs are gone to keep the lower part light */
 /* ---------- hover states + camera-style cursor ---------- */
 /* buttons: quick, clearly visible, same yellow as the headline */
@@ -220,7 +223,7 @@ body.ctl-open .ctlp{display:flex}
         <button class="abs" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navPanel" style="left:823px;top:56px;display:none"><svg id="menuIc" width="61" height="61" viewBox="0 0 61 61" fill="none"><path d="M7.6 15.3H53.4M7.6 30.5H53.4M7.6 45.8H53.4" stroke="#fff" stroke-width="5.08" stroke-linecap="round"/></svg></button>
 
         <!-- quiet scroll hint -->
-        <div class="abs" id="scrollHint" style="left:960px;top:1018px" aria-hidden="true"><span>Scroll</span><i></i></div>
+        <button type="button" class="abs" id="scrollHint" style="left:960px;top:1006px" aria-label="Replay the video from the start" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg><span>Replay</span></button>
         <!-- focus frame and crosshair -->
         <div class="abs" id="focus" style="left:850px;top:549px;width:256.5px;height:336px">
           <svg class="abs fo" style="left:0;top:0" width="256.5" height="336" viewBox="0 0 260 339" fill="none">
@@ -261,7 +264,7 @@ body.ctl-open .ctlp{display:flex}
       <div class="abs pt sh" id="y27" style="left:470px;top:556px;font-size:24px;letter-spacing:-.48px">2027</div>
       <div class="abs pt" id="come" style="left:1382px;top:549px;font-size:24px;letter-spacing:-.48px">Come</div>
       <div class="abs pt sh" id="withE" style="left:1454px;top:549px;width:418px;font-size:200px;letter-spacing:-4px">with</div>
-      <div class="abs pt sh" id="us" style="left:1451px;top:684px;width:418px;text-align:right;font-size:200px;letter-spacing:-4px">us</div>
+      <div class="abs pt sh" id="us" style="left:1451px;top:712px;width:418px;text-align:right;font-size:200px;letter-spacing:-4px">us</div>
 
       <!-- final block (phones): logo and name over the underwater picture -->
       <div class="abs fin" id="fin" style="left:0;top:0;width:100%;height:100%;justify-content:center;gap:30px">
@@ -419,7 +422,7 @@ function drawPhoto(u,lift){
   if(!(photo.complete&&photo.naturalWidth>0))return;
   c.drawImage(photo,0,0,W,H);
   /* the picture is graded darker than the footage: it is lifted to the video's light (x1.22) before the cut, so the dissolve has no brightness step */
-  var L=lift?eio(seg(u,VS-2.2,VS)):0;
+  var L=lift?eio(seg(u,VS-2.4,VS-.7)):0;
   if(L>0){c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.22*L;c.drawImage(photo,0,0,W,H);c.restore()}
 }
 /* ----- phones: the landscape footage is scaled proportionally to the full height of a 9:16 canvas and cropped sideways, like the CapCut reframe. The crop window follows the surfer. ----- */
@@ -438,8 +441,8 @@ function x0For(fx){return cl(fx-.5*winV(),0,1920-winV())}
 function heroFx(){return 934.6}                                    /* the boy on the still picture, in video pixels */
 function runFx(u){return u<VS?heroFx():crv(vtOf(u)<4.967?KF_A:KF_B,vtOf(u))*1920}
 function drawSceneM(u){
-  var s=H/1080,sw=(1-seg(u,VS-1,VS))*(W/1280),x0=x0For(runFx(u));
-  c.save();c.translate(Math.sin(u*1.7)*1.5*sw,Math.cos(u*1.3)*1.1*sw);
+  var s=H/1080,x0=x0For(runFx(u));
+  c.save();   /* no sway: the picture stays still before the video */
   c.fillStyle='#0b0a10';c.fillRect(-20,-20,W+40,H+40);
   c.save();c.scale(s,s);c.translate(-x0,0);
   if(photo.complete&&photo.naturalWidth>0)c.drawImage(photo,-72.5,-2.61,2064,1083);
@@ -464,16 +467,18 @@ function drawSceneM(u){
 function drawScene(u){
   if(MOB)return drawSceneM(u);
   var f=W/1920;
-  var sw=(1-seg(u,VS-1,VS))*(W/1280);   /* handheld sway settles before the video */
-  c.save();c.translate(Math.sin(u*1.7)*1.5*sw,Math.cos(u*1.3)*1.1*sw);
+  /* the hero picture is perfectly still until the footage starts (no handheld sway) */
+  c.save();
   drawPhoto(u,true);
-  var a=eio(seg(u,VS-.15,VS+.25));
+  /* handover: first the still is matched in brightness, then the (still paused on its first frame) footage cross-fades in over it
+     while nothing moves; the push-in only begins after the video has started, from zero speed */
+  var a=eio(seg(u,VS-.7,VS-.1));
   if(a>0&&vidReady()){
     var ox=VOX*f,oy=VOY*f,vw=vid.videoWidth,vh=vid.videoHeight;
     /* the footage is the picture's own shot but covers it only from VOX,VOY on, so a strip at the bottom and the left edge is not covered.
        Right at the start the footage eases in to 1.12x about its top-right corner (a slow push-in, about one second) until it covers the whole frame;
        until then the still picture shows through in the strips. */
-    var zs=1+.12*eio(seg(u,VS-.05,VS+.95)),ax=ox+W,ay=oy;
+    var zs=1+.12*eio(seg(u,VS,VS+1.6)),ax=ox+W,ay=oy;
     c.save();c.translate(ax,ay);c.scale(zs,zs);c.translate(-ax,-ay);
     c.globalAlpha=a;c.drawImage(vid,ox,oy,W,H);c.globalAlpha=1;
     c.restore();
@@ -715,7 +720,7 @@ function updateDom(u,lv){
   if(!heroReady)SCT=0;
   SC+=(SCT-SC)*Math.min(1,dS*9);if(Math.abs(SCT-SC)<.002)SC=SCT;
   var sh=ge('scrollHint');
-  if(sh){var ho=heroReady?eio(seg(u,RT1,RT1+.8)):0;sh.style.opacity=ho*(1-Math.min(1,SC*4))*.95}
+  if(sh){var ho=heroReady?eio(seg(u,RT1,RT1+.8)):0;sh.style.opacity=ho;sh.style.pointerEvents=ho>.6?'auto':'none';sh.tabIndex=ho>.6?0:-1}   /* replay control appears once the video has finished */
   frame.style.transform='translate('+OX+'px,'+OY+'px) scale('+K+') translate('+((hs(Math.floor(u*30)+2)-.5)*lv*60)+'px,0)';
   var i;
   for(i=0;i<hudItems.length;i++)flick(hudItems[i][0],hudItems[i][1],u);
@@ -866,6 +871,8 @@ var bPlay=ge('bPlay'),bRe=ge('bRe'),bSnd=ge('bSnd'),sl=ge('sl'),ro=ge('ro'),chip
 if(reduce){t=DUR;playing=false}
 function syncUI(){bPlay.textContent=playing?'Пауза':'Играть'}
 bPlay.addEventListener('click',function(){if(!playing&&t>=DUR)t=0;playing=!playing;last=performance.now();syncUI()});
+/* replay control: jumps back to the still hero picture just before the footage starts, so the video plays again */
+(function(){var rb=ge('scrollHint');if(!rb)return;rb.addEventListener('click',function(){blocked=false;SCT=0;SC=0;t=5.6;playing=true;last=performance.now();syncUI()})})();
 bRe.addEventListener('click',function(){blocked=false;t=0;playing=true;last=performance.now();syncUI()});
 bSnd.addEventListener('click',function(){
   soundOn=!soundOn;vid.muted=!soundOn;
@@ -973,5 +980,4 @@ requestAnimationFrame(frameLoop);
 })();
 
 </script>
-
 </html>
