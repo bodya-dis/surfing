@@ -363,6 +363,9 @@ function primeVideo(){
   try{var pr=vid.play();if(pr&&pr.then)pr.then(function(){primed=true},function(){primed=false})}catch(x){primed=false}
 }
 vid.addEventListener('canplay',primeVideo);
+/* the "tap to play" notice is only for a video that is really not playing: as soon as the element plays, any earlier rejection is forgotten */
+vid.addEventListener('playing',function(){blocked=false});
+var blkT=0;
 ['pointerdown','touchstart','keydown','wheel'].forEach(function(n){window.addEventListener(n,primeVideo,{passive:true,once:true})});
 /* phones: render-resolution scale; the frame-rate governor in the main loop lowers it when the device cannot keep up */
 var MQ=1;
@@ -619,7 +622,9 @@ function syncVideo(u,playing){
   var vt=vtOf(u),rate=rateOf(u)*spd(u),live=playing&&u>=VS&&u<UEND;
   if(live){
     if(vid.playbackRate!==rate)vid.playbackRate=rate;
-    if(vid.paused&&!blocked){var pr=vid.play();if(pr&&pr.catch)pr.catch(function(er){if(er&&er.name==='NotAllowedError')blocked=true})}
+    if(!vid.paused)blocked=false;
+    if(blocked&&vid.paused&&performance.now()-blkT>600){blkT=performance.now();var rp=vid.play();if(rp&&rp.then)rp.then(function(){blocked=false},function(){})}   /* quiet retry */
+    if(vid.paused&&!blocked){var pr=vid.play();if(pr&&pr.catch)pr.catch(function(er){if(er&&er.name==='NotAllowedError'){blocked=true;blkT=performance.now()}})}
     if(Math.abs(vid.currentTime-vt)>.3)vid.currentTime=vt;
   }else{
     if(!vid.paused)vid.pause();
@@ -950,7 +955,8 @@ function frameLoop(now){
   }else{slowN=0;slowSum=0}
   if(playing&&!blocked){t+=dt*spd(t);if(t>=DUR){t=DUR;playing=false;syncUI()}}
   syncVideo(t,playing);
-  tapEl.style.display=(blocked&&playing)?'flex':'none';
+  if(blocked&&!vid.paused)blocked=false;
+  tapEl.style.display=(blocked&&playing&&vid.paused)?'flex':'none';
   var lv=render(t);
   updateDom(t,lv);
   if(!stage.classList.contains('go'))stage.classList.add('go');
