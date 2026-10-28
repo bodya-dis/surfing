@@ -195,7 +195,7 @@ body.ctl-open .ctlp{display:flex}
 <div class="wrap">
   <div class="stage" id="stage">
     <canvas id="cv" width="1280" height="720"></canvas>
-    <video id="vid" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" style="position:absolute;width:2px;height:2px;opacity:0;pointer-events:none"></video>
+    <video id="vid" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" style="position:absolute;left:0;top:0;width:160px;height:90px;opacity:.01;pointer-events:none"></video>
     <div class="sheen"></div>
     <div class="frame" id="frame">
 
@@ -224,7 +224,7 @@ body.ctl-open .ctlp{display:flex}
         <button class="abs" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navPanel" style="left:823px;top:56px;display:none"><svg id="menuIc" width="61" height="61" viewBox="0 0 61 61" fill="none"><path d="M7.6 15.3H53.4M7.6 30.5H53.4M7.6 45.8H53.4" stroke="#fff" stroke-width="5.08" stroke-linecap="round"/></svg></button>
 
         <!-- quiet scroll hint -->
-        <button type="button" class="abs" id="scrollHint" style="left:960px;top:1000px" aria-label="Replay the video from the start" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg></button>
+        <button type="button" class="abs" id="scrollHint" style="left:960px;top:1000px" aria-label="Replay the text animation" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg></button>
         <!-- focus frame and crosshair -->
         <div class="abs" id="focus" style="left:850px;top:549px;width:256.5px;height:336px">
           <svg class="abs fo" style="left:0;top:0" width="256.5" height="336" viewBox="0 0 260 339" fill="none">
@@ -353,6 +353,17 @@ function useMedia(mob){
 function vidReady(){return !vidBad&&vid.readyState>=2&&vid.videoWidth>0}
 /* phones can refuse autoplay: the page then waits for one tap */
 var blocked=false;
+/* Safari: autoplay of a muted inline video is only dependable when the element is a real, visible-sized element (not 2px / opacity 0) and has been "unlocked".
+   So play() is requested as soon as the video can play (the clock keeps it paused until its moment) and again on the very first touch/click/key/scroll,
+   which also clears a previous rejection; with that, the "tap to play" fallback should only ever show where the OS forbids autoplay (e.g. iOS Low Power Mode). */
+var primed=false;
+function primeVideo(){
+  blocked=false;
+  if(primed)return;primed=true;
+  try{var pr=vid.play();if(pr&&pr.then)pr.then(function(){primed=true},function(){primed=false})}catch(x){primed=false}
+}
+vid.addEventListener('canplay',primeVideo);
+['pointerdown','touchstart','keydown','wheel'].forEach(function(n){window.addEventListener(n,primeVideo,{passive:true,once:true})});
 /* phones: render-resolution scale; the frame-rate governor in the main loop lowers it when the device cannot keep up */
 var MQ=1;
 
@@ -738,7 +749,7 @@ function popBtn(p,u){
   bsEl.style.transform='translateY('+((1-e)*26).toFixed(1)+'px) scale('+(.82+.18*b).toFixed(3)+')';
   bsEl.style.boxShadow='0 0 '+(34*(1-p)).toFixed(1)+'px rgba(253,198,57,'+(.6*(1-p)).toFixed(2)+')';
 }
-var noFocus=false,FOC_UP=0,SC=0,SCT=0,scLast=0,heroReady=false;
+var txtRp=-1,noFocus=false,FOC_UP=0,SC=0,SCT=0,scLast=0,heroReady=false;
 function updateDom(u,lv){
   heroReady=u>=RT1;
   var nowS=performance.now(),dS=Math.min(.1,(nowS-scLast)/1000);scLast=nowS;
@@ -785,6 +796,11 @@ function updateDom(u,lv){
   bsEl.style.pointerEvents=(+bsEl.style.opacity>.5)?'auto':'none';
   for(i=0;i<texts.length;i++){
     var el=texts[i][0],o=texts[i][3]?outB:outS;
+    if(u>=RET0&&txtRp>=0){   /* text-only replay: the headline and captions animate in again over the finished hero; the video is untouched */
+      var lu=2.0+(performance.now()-txtRp)/1000*2.5;
+      if(lu<6.6){reveal(el,seg(lu,texts[i][1],texts[i][1]+texts[i][2]),lu,i);continue}
+      if(i===texts.length-1)txtRp=-1;
+    }
     if(u>=RET0){el.style.opacity=rt;el.style.clipPath='';el.style.transform='';el.style.textShadow='';continue}
     if(o>0){el.style.opacity=1-o;continue}
     reveal(el,seg(u,texts[i][1],texts[i][1]+texts[i][2]),u,i);
@@ -897,7 +913,12 @@ if(reduce){t=DUR;playing=false}
 function syncUI(){bPlay.textContent=playing?'Пауза':'Играть'}
 bPlay.addEventListener('click',function(){if(!playing&&t>=DUR)t=0;playing=!playing;last=performance.now();syncUI()});
 /* replay control: jumps back to the still hero picture just before the footage starts, so the video plays again */
-(function(){var rb=ge('scrollHint');if(!rb)return;rb.addEventListener('click',function(){blocked=false;SCT=0;SC=0;noFocus=true;t=5.6;playing=true;last=performance.now();syncUI()})})();
+/* replay (no button chrome): only the TEXT animation plays again over the finished hero; the video is not restarted.
+   Triggers: the quiet icon, the R key, or stage.dispatchEvent(new CustomEvent('replay-text')) from any outside code. */
+function replayText(){if(heroReady)txtRp=performance.now()}
+(function(){var rb=ge('scrollHint');if(rb)rb.addEventListener('click',replayText);
+  stage.addEventListener('replay-text',replayText);
+  document.addEventListener('keydown',function(e){if((e.key==='r'||e.key==='R')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||''))replayText()})})();
 bRe.addEventListener('click',function(){noFocus=false;blocked=false;t=0;playing=true;last=performance.now();syncUI()});
 bSnd.addEventListener('click',function(){
   soundOn=!soundOn;vid.muted=!soundOn;
