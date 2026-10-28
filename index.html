@@ -224,7 +224,7 @@ body.ctl-open .ctlp{display:flex}
         <button class="abs" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navPanel" style="left:823px;top:56px;display:none"><svg id="menuIc" width="61" height="61" viewBox="0 0 61 61" fill="none"><path d="M7.6 15.3H53.4M7.6 30.5H53.4M7.6 45.8H53.4" stroke="#fff" stroke-width="5.08" stroke-linecap="round"/></svg></button>
 
         <!-- quiet scroll hint -->
-        <button type="button" class="abs" id="scrollHint" style="left:960px;top:1000px" aria-label="Replay the text animation" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg></button>
+        <button type="button" class="abs" id="scrollHint" style="left:960px;top:1000px" aria-label="Replay the video" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg></button>
         <!-- focus frame and crosshair -->
         <div class="abs" id="focus" style="left:850px;top:549px;width:256.5px;height:336px">
           <svg class="abs fo" style="left:0;top:0" width="256.5" height="336" viewBox="0 0 260 339" fill="none">
@@ -913,12 +913,13 @@ if(reduce){t=DUR;playing=false}
 function syncUI(){bPlay.textContent=playing?'Пауза':'Играть'}
 bPlay.addEventListener('click',function(){if(!playing&&t>=DUR)t=0;playing=!playing;last=performance.now();syncUI()});
 /* replay control: jumps back to the still hero picture just before the footage starts, so the video plays again */
-/* replay (no button chrome): only the TEXT animation plays again over the finished hero; the video is not restarted.
-   Triggers: the quiet icon, the R key, or stage.dispatchEvent(new CustomEvent('replay-text')) from any outside code. */
-function replayText(){if(heroReady)txtRp=performance.now()}
-(function(){var rb=ge('scrollHint');if(rb)rb.addEventListener('click',replayText);
-  stage.addEventListener('replay-text',replayText);
-  document.addEventListener('keydown',function(e){if((e.key==='r'||e.key==='R')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||''))replayText()})})();
+/* replay (no button chrome): only the VIDEO plays again; no text animation is started.
+   The clock jumps to the instant just before the footage starts (6.9 s) where every caption is already fully shown, so nothing is re-animated;
+   the focus frame stays off. Triggers: the quiet icon, the R key, or stage.dispatchEvent(new CustomEvent('replay-video')). */
+function replayVideo(){if(!heroReady)return;blocked=false;SCT=0;SC=0;noFocus=true;txtRp=-1;t=6.9;playing=true;last=performance.now();syncUI()}
+(function(){var rb=ge('scrollHint');if(rb)rb.addEventListener('click',replayVideo);
+  stage.addEventListener('replay-video',replayVideo);
+  document.addEventListener('keydown',function(e){if((e.key==='r'||e.key==='R')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||''))replayVideo()})})();
 bRe.addEventListener('click',function(){noFocus=false;blocked=false;t=0;playing=true;last=performance.now();syncUI()});
 bSnd.addEventListener('click',function(){
   soundOn=!soundOn;vid.muted=!soundOn;
